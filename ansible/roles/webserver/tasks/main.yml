@@ -1,0 +1,35 @@
+
+- name: install the nginx package
+  tags: nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: copy html document to the server
+  tags: copy_html, server_reload
+  copy:
+    src: ./files/index.html
+    dest: /var/www/html/index.html
+    owner: www-data
+    group: www-data
+    mode: u=rw,g=r,o=r
+
+- name: copy nginx config file to the server
+  copy:
+    src: ./files/nginx.conf
+    dest: /etc/nginx/sites-available/default
+
+- name: Enable site, link nginx config
+  file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+
+- name: reload nginx service
+  tags: nginx, server_reload
+  systemd:
+    name: nginx
+    state: reloaded
+    enabled: true
+    daemon_reload: true

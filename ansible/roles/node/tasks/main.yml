@@ -1,0 +1,61 @@
+- name: Create app directory for node app
+  tags: app
+  file:
+    path: /var/www/html/app
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0604
+
+- name: Copy package-lock.json to server
+  tags: app
+  copy:
+    src: ./files/app/package-lock.json
+    dest: /var/www/html/app/package-lock.json
+    owner: www-data
+    group: www-data
+    mode: 0644
+
+- name: Copy package.json to server
+  tags: app
+  copy:
+    src: ./files/app/package.json
+    dest: /var/www/html/app/package.json
+    owner: www-data
+    group: www-data
+    mode: 0644
+
+- name: Copy app.js to server
+  tags: app
+  copy:
+    src: ./files/app/app.js
+    dest: /var/www/html/app/app.js
+    owner: www-data
+    group: www-data
+    mode: 0644
+
+- name: Create service file
+  tags: app, deploy
+  template:
+    src: ./files/node_app.service
+    dest: /etc/systemd/system/node_app.service
+  register: service_conf
+
+- name: Reload systemd daemon
+  tags: app, deploy, systemd
+  systemd:
+    daemon_reload: yes
+  when: service_conf.changed
+
+- name: Install dependencies from lockfile
+  tags: app
+  shell: npm ci
+  args:
+    chdir: /var/www/html/app
+
+- name: Start NodeJS service
+  tags: app, deploy, systemd
+  service:
+    name: node_app
+    state: started
+    enabled: yes

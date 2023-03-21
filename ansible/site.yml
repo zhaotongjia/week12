@@ -1,0 +1,17 @@
+---
+- name: Install nginx
+  hosts: aws_ec2
+  remote_user: ubuntu
+  become: True
+
+- name: Roles for the application servers
+  hosts: webservers
+  become: true
+  roles:
+    - appservers
+
+- name: Roles for the database servers
+  hosts: database
+  become: true
+  roles:
+    - database
